@@ -64,6 +64,7 @@ export default function Login() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
+
       <button type="submit">Login With OTP</button>
     </form>
   );
