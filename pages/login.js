@@ -24,6 +24,8 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     // Log in using our email with Magic and store the returned DID token in a variable
+    // const accounts = await magic.wallet.connectWithUI();
+
     try {
       // const didToken = await magic.auth.loginWithMagicLink({ email });
       const didToken = await magic.auth.loginWithEmailOTP({ email });
