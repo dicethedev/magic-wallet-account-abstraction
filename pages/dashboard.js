@@ -2,6 +2,7 @@ import { useContext, useState, useEffect } from "react";
 import { UserContext } from "@/lib/UserContext";
 import Skeleton from "react-loading-skeleton";
 import { magic } from "@/lib/magic";
+import { ethers } from "ethers";
 import { useRouter } from "next/router";
 import { createWeb3 } from "@/lib/web3";
 import contractABI from "../lib/abi";
@@ -83,7 +84,7 @@ export default function Dashboard() {
 
     if (web3) {
       const accounts = await web3.eth.getAccounts();
-      const tokenAddress = "0x6d20F94c5969C36528b7E17beb06123A821B1206";
+      const tokenAddress = "0x53Fd48ba422a9fF4f02cCC5B82CC144862861998";
       try {
         const contract = new web3.eth.Contract(contractABI, tokenAddress);
         const balanceResult = await contract.methods
@@ -107,61 +108,52 @@ export default function Dashboard() {
   }, []);
 
   const mint = async (recipientAddress) => {
-    const web3 = await createWeb3(magic);
     setLoadingMint(true);
     setError("");
 
-    if (web3) {
-      try {
-        const accounts = await web3.eth.getAccounts();
-        const contractAddress = "0x6d20F94c5969C36528b7E17beb06123A821B1206"; // Your contract address
-        const contract = new web3.eth.Contract(contractABI, contractAddress);
+    try {
+      const provider = new ethers.BrowserProvider(magic.rpcProvider);
+      const signer = await provider.getSigner();
+      const contractAddress = "0x53Fd48ba422a9fF4f02cCC5B82CC144862861998";
 
-        // Convert amount to Wei (assuming token has 18 decimals)
-        const amountInWei = web3.utils.toWei(amountToMint.toString(), "ether"); // Change as needed
+      const contract = new ethers.Contract(
+        contractAddress,
+        contractABI,
+        signer
+      );
 
-        // Estimate gas limit for the mint function
-        const gasLimit = await contract.methods
-          .mint(amountInWei, recipientAddress)
-          .estimateGas({ from: accounts[0] });
+      // Convert amount to Wei (assuming token has 18 decimals)
+      const amountInWei = ethers.parseEther(amountToMint.toString());
 
-        // Build the transaction parameters
-        const txnParams = {
-          from: accounts[0],
-          to: contractAddress,
-          data: contract.methods
-            .mint(amountInWei, recipientAddress)
-            .encodeABI(),
-          gas: gasLimit,
-          gasPrice: await web3.eth.getGasPrice(),
-        };
+      // Populate the transaction
+      const transaction = await contract.mint.populateTransaction(
+        amountInWei,
+        recipientAddress
+      );
 
-        // Send the transaction
-        await web3.eth
-          .sendTransaction(txnParams)
-          .on("transactionHash", (hash) => {
-            console.warn("Transaction hash:", hash);
-            setTransactionHash(hash);
-          })
-          .then((receipt) => {
-            console.warn("Transaction receipt:", receipt);
-            getBalance(); // Optionally refresh balance after minting
-          })
-          .catch((error) => {
-            console.warn("Minting error:", error);
-            setError("Minting failed. Please try again."); // Set error message on failure
-          });
-      } catch (error) {
-        console.warn("An error occurred during minting:", error);
-        setError("An error occurred during minting.");
-      } finally {
-        setLoadingMint(false);
-      }
-    } else {
+      const result = await magic.wallet.sendGaslessTransaction(
+        recipientAddress,
+        transaction
+      );
+
+      console.log("Transaction hash:", result);
+      setTransactionHash(result);
+
+      // Wait for the transaction to be mined
+      const receipt = await provider.waitForTransaction(result);
+      console.log("Transaction receipt:", receipt);
+
+      getBalance(); // Optionally refresh balance after minting
+    } catch (error) {
+      console.error("An error occurred during minting:", error);
+      setError("An error occurred during minting: " + error.message);
+    } finally {
       setLoadingMint(false);
-      setError("Web3 is not available. Please check your setup.");
     }
   };
+
+  //gasless Transaction return this result
+  // {"request_id":"45debd2a-318a-40b7-8faa-451033aff14a","state":"PENDING","success":true}
 
   const sendSepolia = async () => {
     const web3 = await createWeb3(magic);
@@ -226,9 +218,21 @@ export default function Dashboard() {
             {transactionHash && (
               <>
                 <h2>Transaction Hash</h2>
-                <p>{transactionHash}</p>
-                {/* <h2><a href={`https://mumbai.polygonscan.com/tx/${transactionHash}`} target="_blank" rel="noopener noreferrer">View Transaction</a> */}
+                <p>
+                  {typeof transactionHash === "string"
+                    ? transactionHash
+                    : JSON.stringify(transactionHash)}
+                </p>
                 <h2>
+                  <a
+                    href={`https://mumbai.polygonscan.com/tx/${transactionHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Transaction
+                  </a>
+                </h2>
+                {/* <h2>
                   <a
                     href={`https://sepolia.etherscan.io//tx/${transactionHash}`}
                     target="_blank"
@@ -236,7 +240,7 @@ export default function Dashboard() {
                   >
                     View Transaction
                   </a>
-                </h2>
+                </h2> */}
               </>
             )}
           </div>
@@ -266,10 +270,13 @@ export default function Dashboard() {
             >
               {loadingMint ? "Minting..." : "Mint Tokens"}
             </button>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && (
+              <p style={{ color: "red" }}>
+                {typeof error === "string" ? error : JSON.stringify(error)}
+              </p>
+            )}
           </center>
 
-          {/* Inputs for recipient address and amount */}
           <div>
             <h2>Send Sepolia ETH</h2>
             <input
