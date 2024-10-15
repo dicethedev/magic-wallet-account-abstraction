@@ -59,7 +59,6 @@
     "name": "ERC721NonexistentToken",
     "type": "error"
   },
-  { "inputs": [], "name": "invalidNumber", "type": "error" },
   {
     "anonymous": false,
     "inputs": [
@@ -200,25 +199,11 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "number",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "ownerOf",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "returnNumber",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -251,20 +236,6 @@
       { "internalType": "bool", "name": "approved", "type": "bool" }
     ],
     "name": "setApprovalForAll",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "uint256", "name": "num", "type": "uint256" }],
-    "name": "setNumber",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{ "internalType": "uint256", "name": "num", "type": "uint256" }],
-    "name": "setNumberStandard",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
